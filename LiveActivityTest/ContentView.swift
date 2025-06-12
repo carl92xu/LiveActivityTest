@@ -8,9 +8,9 @@
 import SwiftUI
 import ActivityKit
 
-func startLiveActivity() {
+func startLiveActivity(counter: Int) {
     let attributes = MyAttributes(name: "Carl")
-    let contentState = MyAttributes.ContentState(status: "Starting")
+    let contentState = MyAttributes.ContentState(status: "Starting", counter: counter)
 
     do {
         let activity = try Activity<MyAttributes>.request(
@@ -25,16 +25,30 @@ func startLiveActivity() {
 }
 
 struct ContentView: View {
+    @State private var counter = 0
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-            
-            Button("Start Live Activity") {
-                startLiveActivity()
+        VStack(spacing: 20) {
+            Text("\(counter)")
+                .font(.system(size: 64, weight: .bold))
+                .monospacedDigit()
+
+            Button {
+                startLiveActivity(counter: counter)
+            } label: {
+                Text("Start Live Activity")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.accentColor)
+                    .cornerRadius(10)
             }
+            .buttonStyle(.plain)
+        }
+        .onReceive(timer) { _ in
+            counter += 1
         }
         .padding()
     }

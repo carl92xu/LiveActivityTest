@@ -92,6 +92,7 @@ extension ConfigurationAppIntent {
 struct MyAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var status: String
+        var counter: Int
     }
 
     var name: String
@@ -107,6 +108,9 @@ struct LiveActivityWidget: Widget {
                     .bold()
                 Text(context.state.status)
                     .font(.headline)
+                    .foregroundColor(.white)
+                Text("Counter: \(context.state.counter)")
+                    .font(.system(size: 24))
                     .foregroundColor(.white)
             }
             .padding()
@@ -128,6 +132,7 @@ struct LiveActivityWidget: Widget {
                     VStack {
                         Text("Name: \(context.attributes.name)")
                         Text("Status: \(context.state.status)")
+                        Text("Counter: \(context.state.counter)")
                     }
                 }
             } compactLeading: {
