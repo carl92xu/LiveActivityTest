@@ -10,7 +10,7 @@ import ActivityKit
 struct MyAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var status: String
-        var counter: Int
+        var counter: Double
     }
 
     var name: String
