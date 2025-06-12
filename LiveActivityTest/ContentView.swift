@@ -8,9 +8,9 @@
 import SwiftUI
 import ActivityKit
 
-func startLiveActivity(counter: Int) {
+func startLiveActivity() {
     let attributes = MyAttributes(name: "Carl")
-    let contentState = MyAttributes.ContentState(status: "Starting", counter: counter)
+    let contentState = MyAttributes.ContentState(status: "Starting", counter: 0)
 
     do {
         let activity = try Activity<MyAttributes>.request(
@@ -34,9 +34,7 @@ struct ContentView: View {
                 .font(.system(size: 64, weight: .bold))
                 .monospacedDigit()
 
-            Button {
-                startLiveActivity(counter: counter)
-            } label: {
+            Button(action: startLiveActivity) {
                 Text("Start Live Activity")
                     .font(.headline)
                     .foregroundColor(.white)
