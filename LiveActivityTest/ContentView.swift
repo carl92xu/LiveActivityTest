@@ -8,9 +8,9 @@
 import SwiftUI
 import ActivityKit
 
-func startLiveActivity() {
+func startLiveActivity(counter: Int, setActivity: @escaping (Activity<MyAttributes>) -> Void) {
     let attributes = MyAttributes(name: "Carl")
-    let contentState = MyAttributes.ContentState(status: "Starting", counter: 0)
+    let contentState = MyAttributes.ContentState(status: "Starting", counter: counter)
 
     do {
         let activity = try Activity<MyAttributes>.request(
@@ -19,6 +19,7 @@ func startLiveActivity() {
             pushType: nil
         )
         print("Live Activity started: \(activity.id)")
+        setActivity(activity)
     } catch {
         print("Failed to start Live Activity: \(error)")
     }
@@ -26,6 +27,7 @@ func startLiveActivity() {
 
 struct ContentView: View {
     @State private var counter = 0
+    @State private var activity: Activity<MyAttributes>? = nil
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     var body: some View {
@@ -34,7 +36,11 @@ struct ContentView: View {
                 .font(.system(size: 64, weight: .bold))
                 .monospacedDigit()
 
-            Button(action: startLiveActivity) {
+            Button {
+                startLiveActivity(counter: counter) { newActivity in
+                    activity = newActivity
+                }
+            } label: {
                 Text("Start Live Activity")
                     .font(.headline)
                     .foregroundColor(.white)
@@ -47,6 +53,12 @@ struct ContentView: View {
         }
         .onReceive(timer) { _ in
             counter += 1
+            if let activity = activity {
+                Task {
+                    let updatedState = MyAttributes.ContentState(status: "Running", counter: counter)
+                    await activity.update(using: updatedState)
+                }
+            }
         }
         .padding()
     }
