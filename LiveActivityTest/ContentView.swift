@@ -29,8 +29,7 @@ struct ContentView: View {
     @State private var showPopup = false
     
     @State private var activity: Activity<MyAttributes>? = nil
-    // Live Activity timer
-    let liveActivityTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    // Remove the separate Live Activity timer since we're updating with the main timer
 
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.colorScheme) private var colorScheme
@@ -234,7 +233,11 @@ struct ContentView: View {
                                 monthlyIncome: monthlyIncome,
                                 taxRate: taxRate,
                                 hoursPerDay: hoursPerDay,
-                                daysPerMonth: daysPerMonth
+                                daysPerMonth: daysPerMonth,
+                                
+                                earningPerSecond: earningPerSecond,
+                                
+                                elapsed: elapsed
                             )
                             { newActivity in
                                 activity = newActivity
@@ -252,14 +255,6 @@ struct ContentView: View {
             .onAppear {
                 startTimer()    // FOR DEBUG
             }
-//            .onReceive(liveActivityTimer) { _ in
-//                if let activity = activity {
-//                    Task {
-//                        let updatedState = MyAttributes.ContentState(status: "Running", counter: totalEarned)
-//                        await activity.update(using: updatedState)
-//                    }
-//                }
-//            }
         }
     }
 
@@ -271,6 +266,26 @@ struct ContentView: View {
             if let start = lastStart {
                 elapsed += Date().timeIntervalSince(start)
                 lastStart = Date()
+                
+                // Update Live Activity if it exists
+                if let activity = activity {
+                    Task {
+                        let updatedState = MyAttributes.ContentState(
+                            status: "Running",
+                            counter: totalEarned,
+                            startDate: start,
+                            incomeType: incomeType,
+                            hourlyRate: hourlyRate,
+                            monthlyIncome: monthlyIncome,
+                            taxRate: taxRate,
+                            hoursPerDay: hoursPerDay,
+                            daysPerMonth: daysPerMonth,
+                            earningPerSecond: earningPerSecond,
+                            elapsed: elapsed
+                        )
+                        await activity.update(using: updatedState)
+                    }
+                }
             }
         }
     }
@@ -315,6 +330,10 @@ func startLiveActivity(
     hoursPerDay: Double,
     daysPerMonth: Double,
     
+    earningPerSecond: Double,
+    
+    elapsed: TimeInterval,
+    
     setActivity: @escaping (Activity<MyAttributes>) -> Void) {
 
     let attributes = MyAttributes(name: "Carl")
@@ -330,7 +349,11 @@ func startLiveActivity(
         monthlyIncome: monthlyIncome,
         taxRate: taxRate,
         hoursPerDay: hoursPerDay,
-        daysPerMonth: daysPerMonth
+        daysPerMonth: daysPerMonth,
+        
+        earningPerSecond: earningPerSecond,
+        
+        elapsed: elapsed
     )
     
     do {

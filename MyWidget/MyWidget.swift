@@ -101,52 +101,45 @@ struct MyAttributes: ActivityAttributes {
         var taxRate: Double
         var hoursPerDay: Double
         var daysPerMonth: Double
+        
+        var earningPerSecond: Double
+        
+        var elapsed: TimeInterval
     }
 
     var name: String
 }
 
 
-
 struct LiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: MyAttributes.self) { context in
-            
-            // *************************************
-            /// Net earning per second, after tax.
-            var earningPerSecond: Double {
-                if context.state.incomeType == 0 {
-                    let netHourly = context.state.hourlyRate * (1 - context.state.taxRate/100)
-                    return netHourly / 3600
-                } else {
-                    let netMonthly = context.state.monthlyIncome * (1 - context.state.taxRate/100)
-                    let totalSeconds = context.state.daysPerMonth * context.state.hoursPerDay * 3600
-                    return totalSeconds > 0 ? netMonthly / totalSeconds : 0
+            TimelineView(.periodic(from: context.state.startDate, by: 20)) { timeline in
+                let newElapsed = context.state.elapsed + timeline.date.timeIntervalSince(context.state.startDate)
+                let totalEarned: Double = newElapsed * context.state.earningPerSecond
+
+                // Lock screen/banner UI
+                VStack {
+    //                Text("$\(String(format: "%.2f", context.state.counter))")
+                    Text("$\(String(format: "%.2f", totalEarned))")
+                        .font(.title)
+                        .bold()
+                    Text("$\(String(format: "%.2f", context.state.hourlyRate))/hr")
+                        .font(.system(size: 24))
+                        .foregroundColor(.white)
+                    Text("Tax: \(String(format: "%.2f", context.state.taxRate))%")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Text("newElapsed: \(String(format: "%.2f", newElapsed))")
+                        .font(.system(size: 24))
+                        .foregroundColor(.white)
                 }
+                .padding()
+                .background(Color.blue)
+                .cornerRadius(12)
+                .activityBackgroundTint(.blue)
+                .activitySystemActionForegroundColor(.white)
             }
-            
-            /// Total earned so far
-            let totalEarned: Double = Date().timeIntervalSince(context.state.startDate) * earningPerSecond
-            // *************************************
-            
-            // Lock screen/banner UI
-            VStack {
-//                Text("$\(String(format: "%.2f", context.state.counter))")
-                Text("$\(String(format: "%.2f", totalEarned))")
-                    .font(.title)
-                    .bold()
-                Text("$\(String(format: "%.2f", context.state.hourlyRate))/hr")
-                    .font(.system(size: 24))
-                    .foregroundColor(.white)
-                Text("Tax: \(String(format: "%.2f", context.state.taxRate))%")
-                    .font(.headline)
-                    .foregroundColor(.white)
-            }
-            .padding()
-            .background(Color.blue)
-            .cornerRadius(12)
-            .activityBackgroundTint(.blue)
-            .activitySystemActionForegroundColor(.white)
         }
         
         dynamicIsland: { context in
@@ -170,7 +163,7 @@ struct LiveActivityWidget: Widget {
             } compactTrailing: {
                 Text("$\(String(format: "%.2f", context.state.counter))")
             } minimal: {
-                Text("$\(String(format: "%.2f", context.state.counter))")
+                Text("$\(String(format: "%.0f", context.state.counter))")
             }
         }
     }

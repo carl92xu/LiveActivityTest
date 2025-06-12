@@ -20,6 +20,10 @@ struct MyAttributes: ActivityAttributes {
         var taxRate: Double
         var hoursPerDay: Double
         var daysPerMonth: Double
+        
+        var earningPerSecond: Double
+        
+        var elapsed: TimeInterval
     }
 
     var name: String
