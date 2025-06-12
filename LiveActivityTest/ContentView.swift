@@ -20,10 +20,10 @@ import ActivityKit
 
 struct ContentView: View {
     // MARK: – Inputs
-    @State private var incomeType = 0              // 0 = hourly, 1 = monthly
-    @State private var hourlyRateText: String = ""
+    @State private var incomeType = 0                   // 0 = hourly, 1 = monthly
+    @State private var hourlyRateText: String = "28"    // FOR DEBUG
     @State private var monthlyIncomeText: String = ""
-    @State private var taxRateText: String = ""
+    @State private var taxRateText: String = "11"       // FOR DEBUG
     @State private var hoursPerDayText: String = ""
     @State private var daysPerMonthText: String = ""
     @State private var showPopup = false
@@ -226,7 +226,17 @@ struct ContentView: View {
                 if verticalSizeClass == .regular {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button {
-                            startLiveActivity(counter: totalEarned) { newActivity in
+                            startLiveActivity(
+                                counter: totalEarned,
+                                
+                                incomeType: incomeType,
+                                hourlyRate: hourlyRate,
+                                monthlyIncome: monthlyIncome,
+                                taxRate: taxRate,
+                                hoursPerDay: hoursPerDay,
+                                daysPerMonth: daysPerMonth
+                            )
+                            { newActivity in
                                 activity = newActivity
                             }
                         } label: {
@@ -240,16 +250,16 @@ struct ContentView: View {
 //                Button("OK", action: resetApp)
 //            }
             .onAppear {
-//                startTimer()    // FOR DEBUG
+                startTimer()    // FOR DEBUG
             }
-            .onReceive(liveActivityTimer) { _ in
-                if let activity = activity {
-                    Task {
-                        let updatedState = MyAttributes.ContentState(status: "Running", counter: totalEarned)
-                        await activity.update(using: updatedState)
-                    }
-                }
-            }
+//            .onReceive(liveActivityTimer) { _ in
+//                if let activity = activity {
+//                    Task {
+//                        let updatedState = MyAttributes.ContentState(status: "Running", counter: totalEarned)
+//                        await activity.update(using: updatedState)
+//                    }
+//                }
+//            }
         }
     }
 
@@ -294,10 +304,35 @@ struct ContentView: View {
 // ***************************************************
 
 
-func startLiveActivity(counter: Double, setActivity: @escaping (Activity<MyAttributes>) -> Void) {
-    let attributes = MyAttributes(name: "Carl")
-    let contentState = MyAttributes.ContentState(status: "Starting", counter: counter)
+//func startLiveActivity(counter: Double, setActivity: @escaping (Activity<MyAttributes>) -> Void) {
+func startLiveActivity(
+    counter: Double,
+    
+    incomeType: Int,
+    hourlyRate: Double,
+    monthlyIncome: Double,
+    taxRate: Double,
+    hoursPerDay: Double,
+    daysPerMonth: Double,
+    
+    setActivity: @escaping (Activity<MyAttributes>) -> Void) {
 
+    let attributes = MyAttributes(name: "Carl")
+//    let contentState = MyAttributes.ContentState(status: "Starting", counter: counter)
+
+    let contentState = MyAttributes.ContentState(
+        status: "Running",
+        counter: counter,
+        
+        startDate: Date(),
+        incomeType: incomeType,
+        hourlyRate: hourlyRate,
+        monthlyIncome: monthlyIncome,
+        taxRate: taxRate,
+        hoursPerDay: hoursPerDay,
+        daysPerMonth: daysPerMonth
+    )
+    
     do {
         let activity = try Activity<MyAttributes>.request(
             attributes: attributes,

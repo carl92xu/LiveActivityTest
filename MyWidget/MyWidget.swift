@@ -93,24 +93,53 @@ struct MyAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var status: String
         var counter: Double
+        
+        var startDate: Date
+        var incomeType: Int
+        var hourlyRate: Double
+        var monthlyIncome: Double
+        var taxRate: Double
+        var hoursPerDay: Double
+        var daysPerMonth: Double
     }
 
     var name: String
 }
 
+
+
 struct LiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: MyAttributes.self) { context in
+            
+            // *************************************
+            /// Net earning per second, after tax.
+            var earningPerSecond: Double {
+                if context.state.incomeType == 0 {
+                    let netHourly = context.state.hourlyRate * (1 - context.state.taxRate/100)
+                    return netHourly / 3600
+                } else {
+                    let netMonthly = context.state.monthlyIncome * (1 - context.state.taxRate/100)
+                    let totalSeconds = context.state.daysPerMonth * context.state.hoursPerDay * 3600
+                    return totalSeconds > 0 ? netMonthly / totalSeconds : 0
+                }
+            }
+            
+            /// Total earned so far
+            let totalEarned: Double = Date().timeIntervalSince(context.state.startDate) * earningPerSecond
+            // *************************************
+            
             // Lock screen/banner UI
             VStack {
-                Text(context.attributes.name)
+//                Text("$\(String(format: "%.2f", context.state.counter))")
+                Text("$\(String(format: "%.2f", totalEarned))")
                     .font(.title)
                     .bold()
-                Text(context.state.status)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Text("Counter: \(String(format: "%.2f", context.state.counter))")
+                Text("$\(String(format: "%.2f", context.state.hourlyRate))/hr")
                     .font(.system(size: 24))
+                    .foregroundColor(.white)
+                Text("Tax: \(String(format: "%.2f", context.state.taxRate))%")
+                    .font(.headline)
                     .foregroundColor(.white)
             }
             .padding()
@@ -123,16 +152,16 @@ struct LiveActivityWidget: Widget {
         dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Text("Leading")
+                    Text("$\(String(format: "%.2f", context.state.hourlyRate))/hr")
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text("Trailing")
+                    Text("Tax: \(String(format: "%.2f", context.state.taxRate))%")
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack {
-                        Text("Name: \(context.attributes.name)")
-                        Text("Status: \(context.state.status)")
-                        Text("Counter: \(String(format: "%.2f", context.state.counter))")
+                        Text("$\(String(format: "%.2f", context.state.hourlyRate))/hr")
+                        Text("Tax: \(String(format: "%.2f", context.state.taxRate))%")
+                        Text("$\(String(format: "%.2f", context.state.counter))")
                     }
                 }
             } compactLeading: {
