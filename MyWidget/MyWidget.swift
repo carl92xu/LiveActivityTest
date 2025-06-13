@@ -11,21 +11,39 @@ import ActivityKit
 
 struct Provider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: ConfigurationAppIntent())
+        SimpleEntry(
+            date: Date(),
+            configuration: ConfigurationAppIntent(),
+            hourlyRate: 28.0,
+            taxRate: 11.0,
+            elapsed: 0
+        )
     }
 
     func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: configuration)
+        SimpleEntry(
+            date: Date(),
+            configuration: configuration,
+            hourlyRate: 28.0,
+            taxRate: 11.0,
+            elapsed: 0
+        )
     }
     
     func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
         var entries: [SimpleEntry] = []
 
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
+        // Generate a timeline consisting of entries every 20 seconds
         let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, configuration: configuration)
+        for secondOffset in stride(from: 0, to: 300, by: 20) {
+            let entryDate = Calendar.current.date(byAdding: .second, value: secondOffset, to: currentDate)!
+            let entry = SimpleEntry(
+                date: entryDate,
+                configuration: configuration,
+                hourlyRate: 28.0,
+                taxRate: 11.0,
+                elapsed: TimeInterval(secondOffset)
+            )
             entries.append(entry)
         }
 
@@ -40,17 +58,32 @@ struct Provider: AppIntentTimelineProvider {
 struct SimpleEntry: TimelineEntry {
     let date: Date
     let configuration: ConfigurationAppIntent
+    let hourlyRate: Double
+    let taxRate: Double
+    let elapsed: TimeInterval
+    
+    var totalEarned: Double {
+        let netHourly = hourlyRate * (1 - taxRate/100)
+        let earningPerSecond = netHourly / 3600
+        return elapsed * earningPerSecond
+    }
 }
 
 struct MyWidgetEntryView : View {
     var entry: Provider.Entry
 
     var body: some View {
-        Text("Time:")
-        Text(entry.date, style: .time)
-
-        Text("Favorite Emoji:")
-        Text(entry.configuration.favoriteEmoji)
+        VStack {
+            Text("$\(String(format: "%.2f", entry.totalEarned))")
+                .font(.title)
+                .bold()
+            Text("$\(String(format: "%.2f", entry.hourlyRate))/hr")
+                .font(.system(size: 24))
+            Text("Tax: \(String(format: "%.2f", entry.taxRate))%")
+                .font(.headline)
+            Text("Time Elapsed: \(String(format: "%.0f", entry.elapsed))")
+                .font(.system(size: 12))
+        }
     }
 }
 
@@ -82,8 +115,8 @@ extension ConfigurationAppIntent {
 #Preview(as: .systemSmall) {
     MyWidget()
 } timeline: {
-    SimpleEntry(date: .now, configuration: .smiley)
-    SimpleEntry(date: .now, configuration: .starEyes)
+    SimpleEntry(date: .now, configuration: .smiley, hourlyRate: 28.0, taxRate: 11.0, elapsed: 0)
+    SimpleEntry(date: .now, configuration: .starEyes, hourlyRate: 28.0, taxRate: 11.0, elapsed: 0)
 }
 
 
@@ -110,17 +143,15 @@ struct MyAttributes: ActivityAttributes {
     var name: String
 }
 
-
 struct LiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: MyAttributes.self) { context in
             TimelineView(.periodic(from: context.state.startDate, by: 20)) { timeline in
                 let newElapsed = context.state.elapsed + timeline.date.timeIntervalSince(context.state.startDate)
                 let totalEarned: Double = newElapsed * context.state.earningPerSecond
-
+                
                 // Lock screen/banner UI
                 VStack {
-    //                Text("$\(String(format: "%.2f", context.state.counter))")
                     Text("$\(String(format: "%.2f", totalEarned))")
                         .font(.title)
                         .bold()
@@ -130,8 +161,8 @@ struct LiveActivityWidget: Widget {
                     Text("Tax: \(String(format: "%.2f", context.state.taxRate))%")
                         .font(.headline)
                         .foregroundColor(.white)
-                    Text("newElapsed: \(String(format: "%.2f", newElapsed))")
-                        .font(.system(size: 24))
+                    Text("Time Elapsed: \(String(format: "%.0f", newElapsed))")
+                        .font(.system(size: 12))
                         .foregroundColor(.white)
                 }
                 .padding()
@@ -159,7 +190,6 @@ struct LiveActivityWidget: Widget {
                 }
             } compactLeading: {
                 Text("🚽")
-                //Text("🧻")
             } compactTrailing: {
                 Text("$\(String(format: "%.2f", context.state.counter))")
             } minimal: {
