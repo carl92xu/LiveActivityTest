@@ -112,13 +112,13 @@ extension ConfigurationAppIntent {
     }
 }
 
-#Preview(as: .systemSmall) {
-    MyWidget()
-} timeline: {
-    SimpleEntry(date: .now, configuration: .smiley, hourlyRate: 28.0, taxRate: 11.0, elapsed: 0)
-    SimpleEntry(date: .now, configuration: .starEyes, hourlyRate: 28.0, taxRate: 11.0, elapsed: 0)
-}
-
+// Widget Preview
+//#Preview(as: .systemSmall) {
+//    MyWidget()
+//} timeline: {
+//    SimpleEntry(date: .now, configuration: .smiley, hourlyRate: 28.0, taxRate: 11.0, elapsed: 0)
+//    SimpleEntry(date: .now, configuration: .starEyes, hourlyRate: 28.0, taxRate: 11.0, elapsed: 0)
+//}
 
 // MARK: - Live Activity
 
@@ -149,27 +149,31 @@ struct LiveActivityWidget: Widget {
             TimelineView(.periodic(from: context.state.startDate, by: 20)) { timeline in
                 let newElapsed = context.state.elapsed + timeline.date.timeIntervalSince(context.state.startDate)
                 let totalEarned: Double = newElapsed * context.state.earningPerSecond
-                
+
                 // Lock screen/banner UI
-                VStack {
+                HStack {
                     Text("$\(String(format: "%.2f", totalEarned))")
                         .font(.title)
                         .bold()
-                    Text("$\(String(format: "%.2f", context.state.hourlyRate))/hr")
-                        .font(.system(size: 24))
-                        .foregroundColor(.white)
-                    Text("Tax: \(String(format: "%.2f", context.state.taxRate))%")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Text("Time Elapsed: \(String(format: "%.0f", newElapsed))")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white)
+                        .padding(.leading)
+                        
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    VStack {
+                        Text("$\(String(format: "%.2f", context.state.hourlyRate))/hr")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                        Text("Tax: \(String(format: "%.2f", context.state.taxRate))%")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                        Text("Time: \(String(format: "%.0f", newElapsed))s")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.trailing)
+//                    .activityBackgroundTint(.primary)
                 }
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(12)
-                .activityBackgroundTint(.blue)
-                .activitySystemActionForegroundColor(.white)
+                .padding(.vertical)
             }
         }
         
@@ -183,10 +187,13 @@ struct LiveActivityWidget: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack {
-                        Text("$\(String(format: "%.2f", context.state.hourlyRate))/hr")
-                        Text("Tax: \(String(format: "%.2f", context.state.taxRate))%")
+//                        Text("$\(String(format: "%.2f", context.state.hourlyRate))/hr")
+//                        Text("Tax: \(String(format: "%.2f", context.state.taxRate))%")
                         Text("$\(String(format: "%.2f", context.state.counter))")
+                            .font(.title)
+                            .bold()
                     }
+                    .padding()
                 }
             } compactLeading: {
                 Text("🚽")
@@ -197,4 +204,103 @@ struct LiveActivityWidget: Widget {
             }
         }
     }
+}
+
+
+#Preview("Live Activity", as: .dynamicIsland(.expanded), using: MyAttributes(name: "Carl")) {
+    LiveActivityWidget()
+} contentStates: {
+    MyAttributes.ContentState(
+        status: "Running",
+        counter: 100.0,
+        startDate: .now,
+        incomeType: 0,
+        hourlyRate: 100.0,
+        monthlyIncome: 0.0,
+        taxRate: 11.0,
+        hoursPerDay: 0.0,
+        daysPerMonth: 0.0,
+        earningPerSecond: 0.0247,
+        elapsed: 60
+    )
+    MyAttributes.ContentState(
+        status: "Running",
+        counter: 200.0,
+        startDate: .now,
+        incomeType: 0,
+        hourlyRate: 100.0,
+        monthlyIncome: 0.0,
+        taxRate: 11.0,
+        hoursPerDay: 0.0,
+        daysPerMonth: 0.0,
+        earningPerSecond: 0.0247,
+        elapsed: 120
+    )
+}
+
+#Preview("Live Activity", as: .dynamicIsland(.compact), using: MyAttributes(name: "Carl")) {
+    LiveActivityWidget()
+} contentStates: {
+    MyAttributes.ContentState(
+        status: "Running",
+        counter: 100.0,
+        startDate: .now,
+        incomeType: 0,
+        hourlyRate: 100.0,
+        monthlyIncome: 0.0,
+        taxRate: 11.0,
+        hoursPerDay: 0.0,
+        daysPerMonth: 0.0,
+        earningPerSecond: 0.0247,
+        elapsed: 60
+    )
+}
+
+#Preview("Live Activity", as: .dynamicIsland(.minimal), using: MyAttributes(name: "Carl")) {
+    LiveActivityWidget()
+} contentStates: {
+    MyAttributes.ContentState(
+        status: "Running",
+        counter: 100.0,
+        startDate: .now,
+        incomeType: 0,
+        hourlyRate: 100.0,
+        monthlyIncome: 0.0,
+        taxRate: 11.0,
+        hoursPerDay: 0.0,
+        daysPerMonth: 0.0,
+        earningPerSecond: 0.0247,
+        elapsed: 60
+    )
+}
+
+#Preview("Live Activity Lock Screen", as: .content, using: MyAttributes(name: "Carl")) {
+    LiveActivityWidget()
+} contentStates: {
+    MyAttributes.ContentState(
+        status: "Running",
+        counter: 100.0,
+        startDate: .now,
+        incomeType: 0,
+        hourlyRate: 100.0,
+        monthlyIncome: 0.0,
+        taxRate: 11.0,
+        hoursPerDay: 0.0,
+        daysPerMonth: 0.0,
+        earningPerSecond: 0.0247,
+        elapsed: 60
+    )
+    MyAttributes.ContentState(
+        status: "Running",
+        counter: 200.0,
+        startDate: .now,
+        incomeType: 0,
+        hourlyRate: 100.0,
+        monthlyIncome: 0.0,
+        taxRate: 11.0,
+        hoursPerDay: 0.0,
+        daysPerMonth: 0.0,
+        earningPerSecond: 0.0247,
+        elapsed: 120
+    )
 }

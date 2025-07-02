@@ -21,7 +21,7 @@ import ActivityKit
 struct ContentView: View {
     // MARK: – Inputs
     @State private var incomeType = 0                   // 0 = hourly, 1 = monthly
-    @State private var hourlyRateText: String = "28"    // FOR DEBUG
+    @State private var hourlyRateText: String = "100"    // FOR DEBUG
     @State private var monthlyIncomeText: String = ""
     @State private var taxRateText: String = "11"       // FOR DEBUG
     @State private var hoursPerDayText: String = ""
@@ -212,12 +212,6 @@ struct ContentView: View {
                         }
                     }
                 }
-                
-//                Button {
-//                    startLiveActivity(counter: totalEarned) { newActivity in
-//                        activity = newActivity
-//                }
-                
             }
             .navigationTitle("Touch Fish")
             .navigationBarTitleDisplayMode(.large)
@@ -263,31 +257,40 @@ struct ContentView: View {
         guard timer == nil else { return }
         lastStart = Date()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            if let start = lastStart {
-                elapsed += Date().timeIntervalSince(start)
-                lastStart = Date()
+            if let start = self.lastStart {
+                self.elapsed += Date().timeIntervalSince(start)
+                self.lastStart = Date()
                 
                 // Update Live Activity if it exists
-                if let activity = activity {
+                if let activity = self.activity {
                     Task {
-                        let updatedState = MyAttributes.ContentState(
-                            status: "Running",
-                            counter: totalEarned,
-                            startDate: start,
-                            incomeType: incomeType,
-                            hourlyRate: hourlyRate,
-                            monthlyIncome: monthlyIncome,
-                            taxRate: taxRate,
-                            hoursPerDay: hoursPerDay,
-                            daysPerMonth: daysPerMonth,
-                            earningPerSecond: earningPerSecond,
-                            elapsed: elapsed
-                        )
-                        await activity.update(using: updatedState)
+                        do {
+                            let updatedState = MyAttributes.ContentState(
+                                status: "Running",
+                                counter: self.totalEarned,
+                                startDate: start,
+                                incomeType: self.incomeType,
+                                hourlyRate: self.hourlyRate,
+                                monthlyIncome: self.monthlyIncome,
+                                taxRate: self.taxRate,
+                                hoursPerDay: self.hoursPerDay,
+                                daysPerMonth: self.daysPerMonth,
+                                earningPerSecond: self.earningPerSecond,
+                                elapsed: self.elapsed
+                            )
+                            try await activity.update(using: updatedState)
+                        } catch {
+                            print("Failed to update Live Activity: \(error)")
+                            // If update fails, try to end the current activity and start a new one
+                            await activity.end(using: nil, dismissalPolicy: .immediate)
+                            self.activity = nil
+                        }
                     }
                 }
             }
         }
+        // Make sure the timer runs on the main run loop
+        RunLoop.main.add(timer!, forMode: .common)
     }
 
     func stopTimer() {
